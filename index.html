@@ -6,6 +6,7 @@
   <title>Consultório de Psicologia Dr. Sérgio | Hub de Automação n8n</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -13,6 +14,17 @@
     .chat-bubble-patient { background: #E2E8F0; color: #1E293B; border-radius: 16px 16px 4px 16px; }
     .chat-bubble-bot { background: #0D9488; color: #FFFFFF; border-radius: 16px 16px 16px 4px; }
     .chat-bubble-crisis { background: #DC2626; color: #FFFFFF; border-radius: 16px 16px 16px 4px; }
+    
+    /* Suporte oficial nativo para ícone PIX */
+    .fa-pix, [class*="fa-pix"] {
+      display: inline-block;
+      width: 1.15em;
+      height: 1.15em;
+      background-color: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M112.5 131.5L233.4 10.6c12.5-12.5 32.8-12.5 45.3 0l120.9 120.9c12.5 12.5 12.5 32.8 0 45.3L278.6 297.7c-12.5 12.5-32.8 12.5-45.3 0L112.5 176.8c-12.5-12.5-12.5-32.8 0-45.3zm287 149l-60.5 60.5 60.5 60.5c12.5 12.5 12.5 32.8 0 45.3L278.6 567.7c-12.5 12.5-32.8 12.5-45.3 0L112.5 446.8c-12.5-12.5-12.5-32.8 0-45.3l60.5-60.5-60.5-60.5c-12.5-12.5-12.5-32.8 0-45.3l37.8-37.8c12.5-12.5 32.8-12.5 45.3 0l70.7 70.7c6.2 6.2 16.4 6.2 22.6 0l70.7-70.7c12.5-12.5 32.8-12.5 45.3 0l37.8 37.8c12.5 12.5 12.5 32.8 0 45.3z'/%3E%3C/svg%3E") no-repeat center / contain;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M112.5 131.5L233.4 10.6c12.5-12.5 32.8-12.5 45.3 0l120.9 120.9c12.5 12.5 12.5 32.8 0 45.3L278.6 297.7c-12.5 12.5-32.8 12.5-45.3 0L112.5 176.8c-12.5-12.5-12.5-32.8 0-45.3zm287 149l-60.5 60.5 60.5 60.5c12.5 12.5 12.5 32.8 0 45.3L278.6 567.7c-12.5 12.5-32.8 12.5-45.3 0L112.5 446.8c-12.5-12.5-12.5-32.8 0-45.3l60.5-60.5-60.5-60.5c-12.5-12.5-12.5-32.8 0-45.3l37.8-37.8c12.5-12.5 32.8-12.5 45.3 0l70.7 70.7c6.2 6.2 16.4 6.2 22.6 0l70.7-70.7c12.5-12.5 32.8-12.5 45.3 0l37.8 37.8c12.5 12.5 12.5 32.8 0 45.3z'/%3E%3C/svg%3E") no-repeat center / contain;
+      vertical-align: -0.15em;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
