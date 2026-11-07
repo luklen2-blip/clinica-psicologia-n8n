@@ -1,0 +1,130 @@
+{
+  "name": "Subfluxo n8n - Cobranca e Conciliacao PIX Oficial Banco Central",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cobranca-pix-psicologia",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "pix_1",
+      "name": "Webhook Solicitacao Pagamento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/pix/gerar",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{ $json.body.phone || '5511999999999' }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.body.name || 'Paciente' }}"
+            },
+            {
+              "name": "amount",
+              "value": "180.00"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "pix_2",
+      "name": "HTTP - Gerar Payload EMV BACEN",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pix = $input.first().json;\nconst reply = `💳 *Pagamento da Sessão de Psicoterapia*\\n\\n👤 Beneficiária: Dra. Camila Duarte\\n💰 Valor: R$ 180,00\\n🔑 Chave PIX: contato@clinicaserenidade.com.br\\n\\n📋 *PIX Copia e Cola:*\\n${pix.payload}\\n\\n📱 QR Code: ${pix.qrCodeUrl}\\n\\nApós a transferência, seu horário é imediatamente confirmado!`;\nreturn [{ json: { phone: pix.phone, message: reply } }];"
+      },
+      "id": "pix_3",
+      "name": "Code - Formatar Mensagem PIX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/simulador-disparo",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "pix_4",
+      "name": "HTTP - Enviar PIX no WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        980,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Solicitacao Pagamento": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Gerar Payload EMV BACEN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Gerar Payload EMV BACEN": {
+      "main": [
+        [
+          {
+            "node": "Code - Formatar Mensagem PIX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Formatar Mensagem PIX": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Enviar PIX no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

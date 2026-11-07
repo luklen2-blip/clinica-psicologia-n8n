@@ -1,0 +1,86 @@
+{
+  "config": {
+    "clinicName": "Consultório de Psicologia Dr. Sérgio",
+    "psychologistName": "Dr. Sérgio",
+    "crp": "CRP 06/148920",
+    "pixKey": "contato@clinicaserenidade.com.br",
+    "pixName": "DR SERGIO PSICOLOGO",
+    "pixCity": "SAO PAULO",
+    "sessionPrice": 180,
+    "sessionDurationMinutes": 50,
+    "meetLinkDefault": "https://meet.google.com/psi-dr-sergio",
+    "clinicAddress": "Av. Paulista, 1842 - Conjunto 74, Bela Vista, São Paulo - SP",
+    "workingHours": {
+      "start": "08:00",
+      "end": "19:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "emergencyNotice": "IMPORTANTE: Este canal automático não realiza pronto-socorro psicológico. Se você estiver em situação de crise emocional intensa ou risco imediato, ligue para o CVV (Centro de Valorização da Vida) pelo número 188 (gratuito 24h) ou procure o pronto-atendimento mais próximo."
+  },
+  "consultas": [
+    {
+      "id": "cons_101",
+      "patientName": "Mariana Silva",
+      "patientPhone": "11987654321",
+      "modality": "Online",
+      "date": "2026-11-04",
+      "time": "14:00",
+      "status": "confirmada",
+      "pixStatus": "pago",
+      "meetLink": "https://meet.google.com/psi-mariana-101",
+      "lembrete24hEnviado": false,
+      "lembrete2hEnviado": false,
+      "createdAt": "2026-11-03T20:28:59.185Z"
+    },
+    {
+      "id": "cons_102",
+      "patientName": "Lucas Ferreira",
+      "patientPhone": "11976543210",
+      "modality": "Presencial",
+      "date": "2026-11-03",
+      "time": "16:00",
+      "status": "confirmada",
+      "pixStatus": "pago",
+      "meetLink": "",
+      "lembrete24hEnviado": true,
+      "lembrete2hEnviado": false,
+      "createdAt": "2026-11-03T20:28:59.185Z"
+    },
+    {
+      "id": "cons_103",
+      "patientName": "Beatriz Almeida",
+      "patientPhone": "11965432109",
+      "modality": "Online",
+      "date": "2026-11-05",
+      "time": "10:00",
+      "status": "pendente",
+      "pixStatus": "pendente",
+      "meetLink": "https://meet.google.com/psi-beatriz-103",
+      "lembrete24hEnviado": false,
+      "lembrete2hEnviado": false,
+      "createdAt": "2026-11-03T20:28:59.185Z"
+    }
+  ],
+  "historicoMensagens": [
+    {
+      "id": "msg_001",
+      "phone": "11987654321",
+      "sender": "paciente",
+      "text": "Olá, gostaria de saber como funciona a terapia online.",
+      "timestamp": "2026-11-03T19:28:59.185Z"
+    },
+    {
+      "id": "msg_002",
+      "phone": "11987654321",
+      "sender": "n8n_bot",
+      "text": "Olá Mariana! Seja bem-vinda ao Consultório do Dr. Sérgio. Sou a Sofia, assistente virtual do Dr. Sérgio...",
+      "timestamp": "2026-11-03T19:30:39.185Z"
+    }
+  ]
+}

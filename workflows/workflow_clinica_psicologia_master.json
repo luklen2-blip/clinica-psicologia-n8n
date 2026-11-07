@@ -1,0 +1,553 @@
+{
+  "name": "Clinica Psicologia - Automacao Master WhatsApp e Agenda (24/7)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-psico-webhook",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook WhatsApp (Evolution / Z-API)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalização de payload recebido de instâncias do WhatsApp (Evolution API, Z-API, Baileys, Webhooks)\nconst body = $input.first().json.body || $input.first().json;\n\n// Extrai telefone, nome e mensagem com fallbacks robustos\nconst senderPhone = (body.phone || body.remoteJid || body.sender || body.from || '5511999999999').replace(/\\D/g, '');\nconst pushName = body.pushName || body.name || body.senderName || 'Paciente';\nconst messageText = (body.message?.conversation || body.message?.extendedTextMessage?.text || body.text || body.body || '').trim();\n\nreturn [{\n  json: {\n    senderPhone,\n    pushName,\n    messageText,\n    lowerText: messageText.toLowerCase(),\n    receivedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "2",
+      "name": "Code - Normalizar Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// TRIAGEM ÉTICA E DETECÇÃO DE CRISE SEVERA (RESOLUÇÃO CFP E CÓDIGO DE ÉTICA)\n// Softwares e bots NUNCA devem fingir ser psicólogos ou atender crises suicidas\nconst text = $input.first().json.lowerText;\nconst phone = $input.first().json.senderPhone;\nconst name = $input.first().json.pushName;\n\nconst crisisKeywords = [\n  'suicidio', 'suicídio', 'me matar', 'acabar com a vida', 'acabar com tudo',\n  'tirar minha vida', 'morrer', 'quero sumir', 'desespero', 'nao aguento mais',\n  'não aguento mais', 'automutilacao', 'automutilação', 'desesperado', 'desesperada'\n];\n\nconst isCrisis = crisisKeywords.some(keyword => text.includes(keyword));\n\nlet intent = 'duvidas_gerais';\n\nif (isCrisis) {\n  intent = 'CRISE_EMERGENCIA';\n} else if (text === '1' || text.includes('confirmar') || text.includes('sim') || text.includes('presenca')) {\n  intent = 'CONFIRMAR_PRESENCA';\n} else if (text === '2' || text.includes('remarcar') || text.includes('mudar horario') || text.includes('mudar horário')) {\n  intent = 'REMARCAR';\n} else if (text === '3' || text.includes('pix') || text.includes('pagar') || text.includes('comprovante') || text.includes('valor')) {\n  intent = 'PAGAMENTO_PIX';\n} else if (text.includes('agendar') || text.includes('consulta') || text.includes('sessao') || text.includes('sessão') || text.includes('horario') || text.includes('horário')) {\n  intent = 'NOVO_AGENDAMENTO';\n} else if (text.includes('humano') || text.includes('psicologa') || text.includes('psicóloga') || text.includes('secretaria') || text.includes('atendente')) {\n  intent = 'FALAR_HUMANO';\n}\n\nreturn [{\n  json: {\n    ...$input.first().json,\n    isCrisis,\n    intent\n  }\n}];"
+      },
+      "id": "3",
+      "name": "Code - Filtro Ético e Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.intent }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "CRISE_EMERGENCIA",
+              "output": 0
+            },
+            {
+              "value2": "CONFIRMAR_PRESENCA",
+              "output": 1
+            },
+            {
+              "value2": "REMARCAR",
+              "output": 2
+            },
+            {
+              "value2": "NOVO_AGENDAMENTO",
+              "output": 3
+            },
+            {
+              "value2": "PAGAMENTO_PIX",
+              "output": 4
+            }
+          ]
+        },
+        "fallbackOutput": 5
+      },
+      "id": "4",
+      "name": "Switch - Roteador de Ações",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PROTOCOLO ÉTICO DE ACOLHIMENTO E REDE DE APOIO IMEDIATO\nconst name = $json.pushName;\nconst messageText = `Olá, ${name}. Notamos que você pode estar passando por um momento de sofrimento intenso.\n\nPor favor, saiba que você não está sozinho(a). Como esta é uma linha automatizada de agendamento de consultas com horário marcado, NÃO temos atendimento de emergência aqui no chat.\n\n🆘 *CANAIS GRATUITOS E IMEDIATOS DE AJUDA 24 HORAS:*\n• *Ligue 188 (CVV - Centro de Valorização da Vida)*: Ligação 100% gratuita, sigilosa e com acolhimento 24h por dia.\n• *SAMU: Ligue 192* para emergências médicas.\n• *CAPS (Centro de Atenção Psicossocial)* ou a UPA / Pronto-Socorro mais próximo da sua residência.\n\nNossa psicóloga também foi notificada com prioridade alta e entrará em contato assim que possível em horário comercial. Cuide-se com carinho.`;\n\nreturn [{\n  json: {\n    phone: $json.senderPhone,\n    message: messageText,\n    priority: 'URGENTE_HUMANO'\n  }\n}];"
+      },
+      "id": "5",
+      "name": "Code - Mensagem Acolhimento Crise CVV 188",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/confirmar-presenca",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{ $json.senderPhone }}"
+            },
+            {
+              "name": "status",
+              "value": "confirmada"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6",
+      "name": "HTTP - Confirmar Presenca no Hub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1120,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const name = $json.pushName;\nconst reply = `✅ *Presença Confirmada com Sucesso, ${name}!*\\n\\nA Dra. já reservou o seu horário na agenda.\\n\\n📍 *Orientações importantes:*\\n• Se for *Online*: Recomendamos fones de ouvido e um local reservado e tranquilo.\\n• Se for *Presencial*: Av. Paulista, 1842 - Conjunto 74.\\n\\nQualquer dúvida, estamos à disposição! Até breve.`;\nreturn [{ json: { phone: $json.senderPhone, message: reply } }];"
+      },
+      "id": "7",
+      "name": "Code - Resposta Confirmacao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const name = $json.pushName;\nconst reply = `Compreendemos perfeitamente, ${name}. Vamos te ajudar a remarcar!\\n\\n🗓️ *Próximos horários disponíveis esta semana:*\\n1️⃣ Quinta-feira às 14:00 (Online)\\n2️⃣ Sexta-feira às 10:00 (Presencial)\\n3️⃣ Segunda-feira às 16:00 (Online)\\n\\nPor favor, responda com o número da opção desejada ou informe o melhor dia e período para você!`;\nreturn [{ json: { phone: $json.senderPhone, message: reply } }];"
+      },
+      "id": "8",
+      "name": "Code - Opcoes Remarcacao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const name = $json.pushName;\nconst reply = `🌸 *Olá, ${name}! Seja muito bem-vindo(a) à Clínica Serenidade.*\\n\\nSou a assistente virtual da *Dra. Camila Duarte (CRP 06/148920)*.\\n\\nOferecemos psicoterapia individual com foco em acolhimento, desenvolvimento emocional e alívio da ansiedade.\\n\\n✨ *Como funciona:*\\n• Duração: 50 minutos por sessão\\n• Modalidade: Online (Google Meet seguro) ou Presencial\\n• Investimento: R$ 180,00 por sessão\\n\\n📅 *Deseja verificar os horários disponíveis para esta semana?*\\nResponda *SIM* para vermos a agenda ou informe se prefere atendimento Online ou Presencial!`;\nreturn [{ json: { phone: $json.senderPhone, message: reply } }];"
+      },
+      "id": "9",
+      "name": "Code - Triagem & Informacoes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/pix/gerar",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{ $json.senderPhone }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.pushName }}"
+            },
+            {
+              "name": "amount",
+              "value": "180.00"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "10",
+      "name": "HTTP - Gerar PIX EMV Oficial",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1120,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pix = $json;\nconst reply = `💳 *Dados para Confirmação da Sessão via PIX:*\\n\\n💰 *Valor:* R$ 180,00\\n👤 *Beneficiária:* Dra. Camila Duarte\\n🔑 *Chave PIX:* contato@clinicaserenidade.com.br\\n\\n📋 *Código PIX Copia e Cola:*\\n${pix.payload}\\n\\n📱 Ou aponte a câmera para o QR Code: ${pix.qrCodeUrl}\\n\\nApós o pagamento, a confirmação é computada automaticamente e seu horário fica garantido.`;\nreturn [{ json: { phone: pix.phone, message: reply } }];"
+      },
+      "id": "11",
+      "name": "Code - Formatador Mensagem PIX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const name = $json.pushName;\nconst reply = `Olá, ${name}! Sou a secretária virtual da Dra. Camila.\\n\\nComo posso te ajudar hoje?\\n\\n1️⃣ *Confirmar presença* na minha consulta\\n2️⃣ *Remarcar* ou consultar meus horários\\n3️⃣ Informações sobre *Valores e Pagamento PIX*\\n4️⃣ Agendar uma *Nova Consulta*\\n5️⃣ Falar diretamente com a *Secretária Humana*\\n\\nBasta digitar o número da opção!`;\nreturn [{ json: { phone: $json.senderPhone, message: reply } }];"
+      },
+      "id": "12",
+      "name": "Code - Menu Principal & Dúvidas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/simulador-disparo",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "13",
+      "name": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1600,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "14",
+      "name": "Cron - Verificador Lembretes (Cada 1h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agendamentos/lembretes-pendentes",
+        "method": "GET",
+        "options": {}
+      },
+      "id": "15",
+      "name": "HTTP - Buscar Consultas D-1 e H-2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        420,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.lembretes || [];\nreturn items.map(item => ({\n  json: item\n}));"
+      },
+      "id": "16",
+      "name": "Code - Iterar Consultas para Lembrete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/enviar-lembrete",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "consultaId",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.patientPhone }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.patientName }}"
+            },
+            {
+              "name": "tipoLembrete",
+              "value": "={{ $json.tipoLembrete }}"
+            },
+            {
+              "name": "time",
+              "value": "={{ $json.time }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ $json.date }}"
+            },
+            {
+              "name": "modality",
+              "value": "={{ $json.modality }}"
+            },
+            {
+              "name": "meetLink",
+              "value": "={{ $json.meetLink }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "17",
+      "name": "HTTP - Disparar Lembrete Anti-No-Show",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        920,
+        960
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp (Evolution / Z-API)": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalizar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalizar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Code - Filtro Ético e Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Filtro Ético e Intent": {
+      "main": [
+        [
+          {
+            "node": "Switch - Roteador de Ações",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Roteador de Ações": {
+      "main": [
+        [
+          {
+            "node": "Code - Mensagem Acolhimento Crise CVV 188",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP - Confirmar Presenca no Hub",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Opcoes Remarcacao",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Triagem & Informacoes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP - Gerar PIX EMV Oficial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Menu Principal & Dúvidas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Mensagem Acolhimento Crise CVV 188": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Confirmar Presenca no Hub": {
+      "main": [
+        [
+          {
+            "node": "Code - Resposta Confirmacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Resposta Confirmacao": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Opcoes Remarcacao": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Triagem & Informacoes": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Gerar PIX EMV Oficial": {
+      "main": [
+        [
+          {
+            "node": "Code - Formatador Mensagem PIX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Formatador Mensagem PIX": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Menu Principal & Dúvidas": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparo WhatsApp (Evolution/Z-API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron - Verificador Lembretes (Cada 1h)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Buscar Consultas D-1 e H-2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Buscar Consultas D-1 e H-2": {
+      "main": [
+        [
+          {
+            "node": "Code - Iterar Consultas para Lembrete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Iterar Consultas para Lembrete": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparar Lembrete Anti-No-Show",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

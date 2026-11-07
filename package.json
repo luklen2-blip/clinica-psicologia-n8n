@@ -1,0 +1,23 @@
+{
+  "name": "clinica-psicologia-n8n-hub",
+  "version": "2.0.0",
+  "description": "Hub de Automação n8n, Triagem Ética, Agendamentos e Régua Anti-No-Show para Clínicas de Psicologia",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/run_all.js",
+    "test:cloud": "node tests/test_cloud_live.js"
+  },
+  "keywords": [
+    "n8n",
+    "psicologia",
+    "automacao",
+    "whatsapp",
+    "agendamento",
+    "pix",
+    "saas"
+  ],
+  "author": "Luciano",
+  "license": "MIT"
+}
+

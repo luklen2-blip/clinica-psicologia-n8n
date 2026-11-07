@@ -1,0 +1,89 @@
+{
+  "name": "Subfluxo n8n - Triagem Acolhedora e Agendamento Ético",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "triagem-psicologia-webhook",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "triagem_1",
+      "name": "Webhook Recebe Contato",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst phone = (body.phone || '5511999999999').replace(/\\D/g, '');\nconst name = body.name || body.pushName || 'Paciente';\nconst text = (body.text || body.message || '').trim().toLowerCase();\n\n// Verificação ética imediata\nif (text.includes('suicidio') || text.includes('me matar') || text.includes('desespero')) {\n  return [{\n    json: {\n      phone,\n      isEmergency: true,\n      reply: `Olá ${name}. Percebemos que você está passando por grande sofrimento. Por favor, ligue imediatamente para o 188 (CVV - Centro de Valorização da Vida). É gratuito, sigiloso e 24h.`\n    }\n  }];\n}\n\n// Menu de Triagem Inicial\nconst reply = `Olá, ${name}! Sou a assistente virtual da Clínica Serenidade.\\n\\nFico muito feliz pelo seu contato para cuidar da sua saúde mental.\\n\\nPara iniciarmos, você prefere:\\n1️⃣ Terapia *Online* (no conforto da sua casa via link seguro)\\n2️⃣ Terapia *Presencial* (Av. Paulista, São Paulo)\\n\\nDigite 1 ou 2 para vermos a disponibilidade.`;\n\nreturn [{\n  json: {\n    phone,\n    name,\n    isEmergency: false,\n    reply\n  }\n}];"
+      },
+      "id": "triagem_2",
+      "name": "Code - Processar Mensagem e Triagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/simulador-disparo",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.reply }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "triagem_3",
+      "name": "HTTP - Enviar Mensagem Acolhimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        720,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Recebe Contato": {
+      "main": [
+        [
+          {
+            "node": "Code - Processar Mensagem e Triagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Processar Mensagem e Triagem": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Enviar Mensagem Acolhimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+

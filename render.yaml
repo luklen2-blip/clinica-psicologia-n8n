@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: clinica-psicologia-n8n
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm test
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+

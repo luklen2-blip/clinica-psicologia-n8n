@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultório de Psicologia Dr. Sérgio | Hub de Automação n8n</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+    .chat-bubble-patient { background: #E2E8F0; color: #1E293B; border-radius: 16px 16px 4px 16px; }
+    .chat-bubble-bot { background: #0D9488; color: #FFFFFF; border-radius: 16px 16px 16px 4px; }
+    .chat-bubble-crisis { background: #DC2626; color: #FFFFFF; border-radius: 16px 16px 16px 4px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- TOPO DE AVISO ÉTICO CFP & CVV 188 -->
+  <div class="bg-teal-900 text-teal-100 px-4 py-2 text-xs flex flex-wrap items-center justify-between shadow-sm">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-heart-pulse text-rose-400"></i>
+      <span><strong>Aviso de Acolhimento Ético:</strong> Em situações de crise emocional aguda, ligue gratuitamente para o <strong>CVV pelo 188</strong> (24h).</span>
+    </div>
+    <div class="flex items-center space-x-3 text-teal-200">
+      <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Resolução CFP 011/2018</span>
+      <span>•</span>
+      <span><i class="fa-solid fa-lock text-cyan-400 mr-1"></i> LGPD Art. 11 (Saúde)</span>
+    </div>
+  </div>
+
+  <!-- CABEÇALHO PRINCIPAL -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 flex items-center justify-center text-white text-xl shadow-md">
+          <i class="fa-solid fa-spa"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <span id="headerClinicName">Consultório de Psicologia Dr. Sérgio</span>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <i class="fa-solid fa-bolt text-amber-500 mr-1"></i> n8n 24/7 Ativo
+            </span>
+          </h1>
+          <p class="text-xs text-slate-500" id="headerPsychologist">Dr. Sérgio • CRP 06/148920</p>
+        </div>
+      </div>
+
+      <!-- BOTÕES DE NAVEGAÇÃO RÁPIDA -->
+      <div class="flex items-center space-x-3">
+        <a href="#workflows" class="px-3 py-2 text-xs font-medium rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 transition flex items-center">
+          <i class="fa-solid fa-diagram-project mr-1.5"></i> Workflows n8n
+        </a>
+        <a href="#simulador" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center">
+          <i class="fa-brands fa-whatsapp text-emerald-600 text-sm mr-1.5"></i> Testar no Chat
+        </a>
+        <button onclick="testarLembretesCron()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm flex items-center">
+          <i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Rodar Cron Anti-No-Show
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+    <!-- CARDS DE MÉTRICAS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card p-5 rounded-2xl shadow-sm border-l-4 border-teal-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Consultas na Agenda</p>
+            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="statTotalConsultas">0</h3>
+          </div>
+          <div class="p-3 bg-teal-50 text-teal-600 rounded-xl"><i class="fa-solid fa-calendar-check text-lg"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 flex items-center">
+          <span class="text-emerald-600 font-semibold mr-1" id="statConfirmadas">0</span> confirmadas pelo n8n
+        </p>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl shadow-sm border-l-4 border-emerald-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Faltas Evitadas (Anti-No-Show)</p>
+            <h3 class="text-2xl font-bold text-emerald-600 mt-1">94.8%</h3>
+          </div>
+          <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><i class="fa-solid fa-user-shield text-lg"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 flex items-center">
+          <i class="fa-solid fa-check text-emerald-500 mr-1"></i> Réguas 24h e 2h ativas
+        </p>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl shadow-sm border-l-4 border-cyan-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Recebido via PIX Oficial</p>
+            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="statValorPix">R$ 360,00</h3>
+          </div>
+          <div class="p-3 bg-cyan-50 text-cyan-600 rounded-xl"><i class="fa-brands fa-pix text-lg"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">EMV Bacen sem intermediários</p>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl shadow-sm border-l-4 border-indigo-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Hub n8n</p>
+            <h3 class="text-2xl font-bold text-indigo-600 mt-1">Online 24/7</h3>
+          </div>
+          <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><i class="fa-solid fa-server text-lg"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 flex items-center">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5 animate-pulse"></span>
+          Rota /api/health HTTP 200
+        </p>
+      </div>
+    </div>
+
+    <!-- SEÇÃO DE WORKFLOWS DO N8N -->
+    <section id="workflows" class="glass-card p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-teal-600"></i>
+            Workflows Prontos para n8n (Download & Importação com 1 Clique)
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Arquivos JSON oficiais compatíveis com n8n Cloud, self-hosted Docker ou n8n Desktop. Basta importar e conectar sua instância WhatsApp.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold px-3 py-1 bg-amber-50 text-amber-800 rounded-lg border border-amber-200">
+            <i class="fa-solid fa-circle-info mr-1"></i> Formato JSON n8n v1/v2
+          </span>
+        </div>
+      </div>
+
+      <!-- GRID DOS FLUXOS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- CARD 1: MASTER -->
+        <div class="bg-gradient-to-b from-teal-50 to-white p-5 rounded-xl border border-teal-200 flex flex-col justify-between hover:shadow-md transition">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-teal-600 text-white">Fluxo Master</span>
+              <i class="fa-solid fa-star text-amber-500 text-xs"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 text-sm">Automação Completa 24/7</h3>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Integra Webhook WhatsApp, Triagem Ética, Roteador de Intenções, Alerta CVV 188, Google Calendar, PIX Oficial e Cron Anti-No-Show.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-teal-100 flex items-center gap-2">
+            <button onclick="copiarWorkflow('workflow_clinica_psicologia_master.json')" class="flex-1 text-xs py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copiar JSON
+            </button>
+            <a href="/api/workflows/download/workflow_clinica_psicologia_master.json" class="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs" title="Baixar JSON">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- CARD 2: TRIAGEM -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+          <div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">Módulo 1</span>
+            <h3 class="font-bold text-slate-900 text-sm mt-3">Triagem & Agendamento</h3>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Acolhimento empático com filtro de palavras-chave éticas, escolha de modalidade (Online / Presencial) e reserva de slots.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+            <button onclick="copiarWorkflow('workflow_agendamento_triagem.json')" class="flex-1 text-xs py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copiar JSON
+            </button>
+            <a href="/api/workflows/download/workflow_agendamento_triagem.json" class="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs" title="Baixar JSON">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- CARD 3: CRON LEMBRETES -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+          <div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Módulo 2</span>
+            <h3 class="font-bold text-slate-900 text-sm mt-3">Régua Anti-No-Show</h3>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Cron Trigger a cada 1h: busca consultas em D-1 (24h) e H-2 (2h), disparando confirmação com botões [1] Confirmar e [2] Remarcar.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+            <button onclick="copiarWorkflow('workflow_lembretes_noshow_cron.json')" class="flex-1 text-xs py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copiar JSON
+            </button>
+            <a href="/api/workflows/download/workflow_lembretes_noshow_cron.json" class="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs" title="Baixar JSON">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- CARD 4: PIX OFICIAL -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+          <div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Módulo 3</span>
+            <h3 class="font-bold text-slate-900 text-sm mt-3">Cobrança PIX Oficial</h3>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Gera payload EMV oficial com CRC-16 e QR Code dinâmico para taxa de reserva ou pagamento de sessão sem tarifas bancárias abusivas.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+            <button onclick="copiarWorkflow('workflow_cobranca_pix.json')" class="flex-1 text-xs py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copiar JSON
+            </button>
+            <a href="/api/workflows/download/workflow_cobranca_pix.json" class="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs" title="Baixar JSON">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- INSTRUÇÃO DE COMO IMPORTAR NO N8N -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600 flex items-start gap-3">
+        <i class="fa-solid fa-circle-question text-teal-600 text-base mt-0.5"></i>
+        <div>
+          <strong class="text-slate-800">Como colocar para rodar no seu n8n:</strong>
+          <ol class="list-decimal list-inside mt-1 space-y-1">
+            <li>Clique no botão <strong>"Copiar JSON"</strong> do fluxo desejado acima.</li>
+            <li>Abra o seu painel do n8n, crie um novo workflow em branco e aperte <strong>CTRL + V</strong> diretamente na tela.</li>
+            <li>Todos os nós, conexões e lógicas éticas aparecerão instantaneamente! Basta salvar e ativar o workflow.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO DUPLA: SIMULADOR DE CHAT WHATSAPP + GESTÃO DE CONSULTAS -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8" id="simulador">
+
+      <!-- SIMULADOR INTERATIVO WHATSAPP (5 colunas) -->
+      <div class="lg:col-span-5 glass-card rounded-2xl shadow-sm flex flex-col overflow-hidden border border-slate-200">
+        <!-- CABEÇALHO DO CHAT -->
+        <div class="bg-teal-700 text-white p-4 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold">
+              <i class="fa-solid fa-spa"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm">Sofia (Assistente Dr. Sérgio)</h4>
+              <p class="text-xs text-teal-200 flex items-center">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1"></span>
+                Automação Ativa
+              </p>
+            </div>
+          </div>
+          <button onclick="limparChat()" class="text-teal-200 hover:text-white text-xs" title="Limpar conversa">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+
+        <!-- MENSAGENS DO CHAT -->
+        <div id="chatMessages" class="p-4 space-y-3 overflow-y-auto h-96 bg-slate-100 text-xs flex flex-col">
+          <!-- Mensagem inicial de acolhimento -->
+          <div class="chat-bubble-bot p-3 self-start max-w-[85%] shadow-sm">
+            🌸 <strong>Olá! Bem-vindo(a) ao Consultório do Dr. Sérgio.</strong><br>            Sou a <strong>Sofia</strong>, secretária virtual do <em>Dr. Sérgio (CRP 06/148920)</em>.<br><br>
+            Como posso ajudar você hoje?<br>
+            1️⃣ Confirmar presença<br>
+            2️⃣ Remarcar consulta<br>
+            3️⃣ Informações sobre Terapia e PIX<br>
+            4️⃣ Agendar nova consulta<br>
+            5️⃣ Falar com a secretária
+          </div>
+        </div>
+
+        <!-- ATALHOS RÁPIDOS DE TESTE -->
+        <div class="p-2 bg-slate-50 border-t border-slate-200 flex flex-wrap gap-1 text-[11px]">
+          <button onclick="enviarMensagemRapida('1')" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-100">
+            ✅ [1] Confirmar Presença
+          </button>
+          <button onclick="enviarMensagemRapida('2')" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-100">
+            🗓️ [2] Remarcar
+          </button>
+          <button onclick="enviarMensagemRapida('3')" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-100">
+            💳 [3] PIX Sessão
+          </button>
+          <button onclick="enviarMensagemRapida('Estou em desespero')" class="px-2 py-1 bg-rose-50 border border-rose-300 text-rose-700 rounded hover:bg-rose-100">
+            🆘 Testar Filtro Crise (188)
+          </button>
+        </div>
+
+        <!-- INPUT DO CHAT -->
+        <form id="chatForm" onsubmit="enviarMensagemForm(event)" class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2">
+          <input type="text" id="chatInput" placeholder="Digite uma mensagem como paciente..." class="flex-grow text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-600">
+          <button type="submit" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- PAINEL DE GESTÃO DA AGENDA DE CONSULTAS (7 colunas) -->
+      <div class="lg:col-span-7 glass-card p-6 rounded-2xl shadow-sm space-y-5 border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-teal-600"></i>
+                Agenda & Régua de Comunicação
+              </h3>
+              <p class="text-xs text-slate-500">Sincronizado automaticamente com Google Calendar e n8n</p>
+            </div>
+            <button onclick="abrirModalNovaConsulta()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-lg shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i> Agendar Paciente
+            </button>
+          </div>
+
+          <!-- TABELA DE CONSULTAS -->
+          <div class="overflow-x-auto mt-4">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 uppercase font-semibold text-[10px] tracking-wider">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg">Paciente</th>
+                  <th class="p-2.5">Data / Horário</th>
+                  <th class="p-2.5">Modalidade</th>
+                  <th class="p-2.5">Status Presença</th>
+                  <th class="p-2.5">PIX</th>
+                  <th class="p-2.5 rounded-r-lg text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaConsultasBody" class="divide-y divide-slate-100">
+                <!-- Inserido dinamicamente via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CARD DE AVISO DE CONFORMIDADE LGPD E PROTEÇÃO DE PRONTUÁRIOS -->
+        <div class="p-4 bg-teal-50/70 border border-teal-200 rounded-xl text-xs text-teal-900 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-user-lock text-teal-600 text-lg"></i>
+            <div>
+              <span class="font-bold">Sigilo Profissional e LGPD de Saúde Mental:</span>
+              <p class="text-[11px] text-teal-800">Prontuários e anotações clínicas nunca transitam em mensagens de WhatsApp ou fluxos públicos.</p>
+            </div>
+          </div>
+          <a href="/privacidade" target="_blank" class="text-xs font-semibold text-teal-700 underline whitespace-nowrap ml-4">Ver Termos</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SEÇÃO DE CONFIGURAÇÕES DA CLÍNICA & DADOS PIX -->
+    <section class="glass-card p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
+      <div class="border-b border-slate-200 pb-4">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-teal-600"></i>
+          Configurações da Clínica & Parâmetros do n8n
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Ajuste os dados da terapeuta, chave PIX oficial e links de videochamada utilizados pelas automações.</p>
+      </div>
+
+      <form id="configForm" onsubmit="salvarConfig(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nome da Clínica</label>
+          <input type="text" id="cfgClinicName" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nome do(a) Psicólogo(a)</label>
+          <input type="text" id="cfgPsychologist" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Registro Profissional (CRP)</label>
+          <input type="text" id="cfgCrp" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Chave PIX Oficial (Bacen)</label>
+          <input type="text" id="cfgPixKey" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Valor da Sessão (R$)</label>
+          <input type="number" step="0.01" id="cfgSessionPrice" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Link Padrão da Sessão Online (Meet)</label>
+          <input type="url" id="cfgMeetLink" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
+          <button type="submit" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg shadow-sm transition">
+            <i class="fa-solid fa-floppy-disk mr-1.5"></i> Salvar Configurações
+          </button>
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- MODAL NOVA CONSULTA -->
+  <div id="modalConsulta" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+        <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-calendar-plus text-teal-600"></i> Agendar Consulta
+        </h4>
+        <button onclick="fecharModalNovaConsulta()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="formNovaConsulta" onsubmit="criarConsulta(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nome do Paciente</label>
+          <input type="text" id="novoNome" required class="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Lucas Mendes">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">WhatsApp (com DDD)</label>
+          <input type="text" id="novoTelefone" required class="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="Ex: 11987654321">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Data</label>
+            <input type="date" id="novaData" required class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Horário</label>
+            <input type="time" id="novoHorario" required class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Modalidade</label>
+          <select id="novaModalidade" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+            <option value="Online">Online (Google Meet)</option>
+            <option value="Presencial">Presencial (Consultório)</option>
+          </select>
+        </div>
+        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+          <button type="button" onclick="fecharModalNovaConsulta()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold shadow-sm">Confirmar Agendamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- RODAPÉ ÉTICO, LEGAL E REGULATÓRIO BRASILEIRO -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-8 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-4">
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <p class="font-bold text-slate-700">Consultório de Psicologia Dr. Sérgio • Hub de Automação n8n</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Arquitetura de Nuvem Resiliente 24/7 com Endpoint de Saúde (/api/health)</p>
+        </div>
+        <div class="flex space-x-4">
+          <a href="/termos" class="hover:text-teal-700 underline">Termos de Uso</a>
+          <a href="/privacidade" class="hover:text-teal-700 underline">Privacidade & LGPD</a>
+          <a href="/api/health" target="_blank" class="hover:text-teal-700 underline">Status API (/api/health)</a>
+        </div>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] leading-relaxed text-slate-600">
+        <strong>Avisos Éticos, Classificação Indicativa e Regulamentação:</strong><br>
+        • Este sistema é uma ferramenta tecnológica de agendamento, confirmação de presença e gestão de fluxo de mensagens para psicólogos.<br>
+        • <strong>Não substitui consultas, diagnósticos ou tratamentos psicológicos ou psiquiátricos.</strong><br>
+        • Faixa etária recomendada para o uso da automação: 16+ anos. Contratação de sessões ou pagamentos via PIX restritos a maiores de 18 anos ou assistidos por seus responsáveis legais (Art. 14 LGPD e Estatuto da Criança e do Adolescente).<br>
+        • Atendimento de emergência: Em sofrimento mental agudo ou risco imediato, ligue para o <strong>CVV pelo 188</strong> ou procure a rede pública de saúde (CAPS / SAMU 192).
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT DE DINÂMICA DO PAINEL & N8N BRIDGE -->
+  <script>
+    let appConfig = {};
+    let consultas = [];
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarConfig();
+      carregarConsultas();
+      carregarMensagens();
+      setInterval(carregarConsultas, 10000);
+    });
+
+    async function carregarConfig() {
+      try {
+        const res = await fetch('/api/config');
+        appConfig = await res.json();
+        document.getElementById('headerClinicName').textContent = appConfig.clinicName || 'Consultório de Psicologia Dr. Sérgio';
+        document.getElementById('headerPsychologist').textContent = `${appConfig.psychologistName} • ${appConfig.crp}`;
+        document.getElementById('cfgClinicName').value = appConfig.clinicName || '';
+        document.getElementById('cfgPsychologist').value = appConfig.psychologistName || '';
+        document.getElementById('cfgCrp').value = appConfig.crp || '';
+        document.getElementById('cfgPixKey').value = appConfig.pixKey || '';
+        document.getElementById('cfgSessionPrice').value = appConfig.sessionPrice || 180;
+        document.getElementById('cfgMeetLink').value = appConfig.meetLinkDefault || '';
+      } catch (e) {
+        console.error('Erro ao carregar config:', e);
+      }
+    }
+
+    async function salvarConfig(e) {
+      e.preventDefault();
+      const updated = {
+        clinicName: document.getElementById('cfgClinicName').value,
+        psychologistName: document.getElementById('cfgPsychologist').value,
+        crp: document.getElementById('cfgCrp').value,
+        pixKey: document.getElementById('cfgPixKey').value,
+        sessionPrice: parseFloat(document.getElementById('cfgSessionPrice').value),
+        meetLinkDefault: document.getElementById('cfgMeetLink').value
+      };
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      if (res.ok) {
+        alert('Configurações da clínica salvas com sucesso!');
+        carregarConfig();
+      }
+    }
+
+    async function carregarConsultas() {
+      try {
+        const res = await fetch('/api/consultas');
+        consultas = await res.json();
+        renderConsultas();
+      } catch (e) {
+        console.error('Erro ao carregar consultas:', e);
+      }
+    }
+
+    function renderConsultas() {
+      const tbody = document.getElementById('tabelaConsultasBody');
+      tbody.innerHTML = '';
+
+      let confirmadasCount = 0;
+      let totalPix = 0;
+
+      consultas.forEach(c => {
+        if (c.status === 'confirmada') confirmadasCount++;
+        if (c.pixStatus === 'pago') totalPix += (appConfig.sessionPrice || 180);
+
+        const statusBadge = c.status === 'confirmada' 
+          ? '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-[10px]">Confirmada</span>'
+          : c.status === 'cancelada'
+          ? '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold text-[10px]">Cancelada</span>'
+          : '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold text-[10px]">Pendente</span>';
+
+        const pixBadge = c.pixStatus === 'pago'
+          ? '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Pago</span>'
+          : '<span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i>Aguardando</span>';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="p-2.5 font-medium text-slate-900">
+            <div>${c.patientName}</div>
+            <div class="text-[10px] text-slate-400">${c.patientPhone}</div>
+          </td>
+          <td class="p-2.5 text-slate-600">${c.date} às <strong>${c.time}</strong></td>
+          <td class="p-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] ${c.modality === 'Online' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'bg-slate-100 text-slate-800'}">
+              ${c.modality === 'Online' ? '<i class="fa-solid fa-video mr-1"></i>Online' : '<i class="fa-solid fa-building mr-1"></i>Presencial'}
+            </span>
+          </td>
+          <td class="p-2.5">${statusBadge}</td>
+          <td class="p-2.5">${pixBadge}</td>
+          <td class="p-2.5 text-right space-x-1">
+            ${c.status !== 'confirmada' ? `
+              <button onclick="mudarStatusConsulta('${c.id}', 'confirmada')" class="p-1 px-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded text-[10px] font-semibold" title="Confirmar Presença">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            ` : ''}
+            <button onclick="gerarPixManual('${c.patientPhone}', '${c.patientName}')" class="p-1 px-2 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded text-[10px] font-semibold" title="Gerar PIX">
+              <i class="fa-brands fa-pix"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('statTotalConsultas').textContent = consultas.length;
+      document.getElementById('statConfirmadas').textContent = confirmadasCount;
+      document.getElementById('statValorPix').textContent = `R$ ${totalPix.toFixed(2)}`;
+    }
+
+    async function mudarStatusConsulta(id, status) {
+      await fetch(`/api/consultas/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      carregarConsultas();
+    }
+
+    function abrirModalNovaConsulta() {
+      document.getElementById('novaData').value = new Date().toISOString().split('T')[0];
+      document.getElementById('novoHorario').value = '14:00';
+      document.getElementById('modalConsulta').classList.remove('hidden');
+    }
+
+    function fecharModalNovaConsulta() {
+      document.getElementById('modalConsulta').classList.add('hidden');
+    }
+
+    async function criarConsulta(e) {
+      e.preventDefault();
+      const payload = {
+        patientName: document.getElementById('novoNome').value,
+        patientPhone: document.getElementById('novoTelefone').value,
+        date: document.getElementById('novaData').value,
+        time: document.getElementById('novoHorario').value,
+        modality: document.getElementById('novaModalidade').value
+      };
+
+      const res = await fetch('/api/consultas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        fecharModalNovaConsulta();
+        document.getElementById('formNovaConsulta').reset();
+        carregarConsultas();
+      }
+    }
+
+    // ================= SIMULADOR DE CHAT N8N =================
+    async function carregarMensagens() {
+      try {
+        const res = await fetch('/api/mensagens');
+        const msgs = await res.json();
+        // Não sobrescreve tudo se já tiver mensagens
+      } catch (e) {}
+    }
+
+    function adicionarMensagemChat(texto, remetente = 'paciente', isCrisis = false) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      
+      if (remetente === 'paciente') {
+        div.className = 'chat-bubble-patient p-3 self-end max-w-[85%] shadow-sm';
+      } else if (isCrisis) {
+        div.className = 'chat-bubble-crisis p-3 self-start max-w-[85%] shadow-sm';
+      } else {
+        div.className = 'chat-bubble-bot p-3 self-start max-w-[85%] shadow-sm';
+      }
+
+      div.innerHTML = texto.replace(/\n/g, '<br>');
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function enviarMensagemForm(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      adicionarMensagemChat(text, 'paciente');
+      processarMensagemSimulador(text);
+    }
+
+    function enviarMensagemRapida(texto) {
+      adicionarMensagemChat(texto, 'paciente');
+      processarMensagemSimulador(texto);
+    }
+
+    async function processarMensagemSimulador(texto) {
+      const lower = texto.toLowerCase();
+
+      // 1. Verificador de Crise e Alerta CVV 188
+      if (lower.includes('suicidio') || lower.includes('desespero') || lower.includes('me matar') || lower.includes('acabar com tudo')) {
+        setTimeout(() => {
+          const msg = `🆘 <strong>ACOLHIMENTO IMEDIATO:</strong><br><br>
+          Olá. Notamos que você pode estar passando por um momento de grande sofrimento psíquico.<br>
+          Por favor, saiba que você não está sozinho(a). Esta é uma linha automatizada de agendamento, mas há ajuda humana agora:<br><br>
+          📞 <strong>Ligue 188 para o CVV (Centro de Valorização da Vida)</strong>: ligação 100% gratuita, sigilosa e com acolhimento 24h.<br>
+          🚑 Em emergências graves, contate o <strong>SAMU pelo 192</strong> ou vá até a UPA mais próxima.<br><br>
+          Nossa equipe foi notificada com prioridade ética. Cuide-se com todo carinho.`;
+          adicionarMensagemChat(msg, 'bot', true);
+        }, 600);
+        return;
+      }
+
+      // 2. Opção 1: Confirmar Presença
+      if (texto === '1' || lower.includes('confirmar')) {
+        setTimeout(async () => {
+          // Atualiza primeira consulta pendente
+          const pendente = consultas.find(c => c.status === 'pendente');
+          if (pendente) {
+            await mudarStatusConsulta(pendente.id, 'confirmada');
+          }
+          const msg = `✅ <strong>Presença Confirmada com Sucesso!</strong><br><br>
+          Sua consulta está confirmada na agenda do Dr. Sérgio.<br><br>
+          📍 <em>Recomendações:</em><br>
+          • Escolha um lugar calmo e seguro para sua sessão.<br>
+          • Em caso de atendimento Online, o link do Google Meet será enviado 2 horas antes.<br><br>
+          Nos vemos em breve!`;
+          adicionarMensagemChat(msg, 'bot');
+        }, 700);
+        return;
+      }
+
+      // 3. Opção 2: Remarcar
+      if (texto === '2' || lower.includes('remarcar')) {
+        setTimeout(() => {
+          const msg = `🗓️ <strong>Remarcação de Consulta:</strong><br><br>
+          Compreendemos perfeitamente! Veja os próximos horários disponíveis esta semana:<br><br>
+          1️⃣ Quinta-feira às 14:00 (Online)<br>
+          2️⃣ Sexta-feira às 10:00 (Presencial)<br>
+          3️⃣ Segunda-feira às 16:00 (Online)<br><br>
+          Qual opção se encaixa melhor na sua rotina?`;
+          adicionarMensagemChat(msg, 'bot');
+        }, 700);
+        return;
+      }
+
+      // 4. Opção 3: Informações e Pagamento PIX
+      if (texto === '3' || lower.includes('pix') || lower.includes('pagar') || lower.includes('valor')) {
+        setTimeout(async () => {
+          const res = await fetch('/api/pix/gerar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: appConfig.sessionPrice || 180, name: 'Paciente' })
+          });
+          const pixData = await res.json();
+          const msg = `💳 <strong>Dados para Pagamento da Sessão via PIX:</strong><br><br>
+          💰 <strong>Valor:</strong> R$ ${(appConfig.sessionPrice || 180).toFixed(2)}<br>
+          👤 <strong>Beneficiário:</strong> ${appConfig.psychologistName || 'Dr. Sérgio'}<br>
+          🔑 <strong>Chave PIX:</strong> ${appConfig.pixKey || 'contato@clinicaserenidade.com.br'}<br><br>
+          📋 <strong>Código PIX Copia-e-Cola:</strong><br>
+          <code class="bg-teal-900/40 p-1.5 rounded block my-1.5 text-[10px] break-all select-all font-mono">${pixData.payload}</code><br>
+          📱 <strong>QR Code:</strong><br>
+          <img src="${pixData.qrCodeUrl}" alt="QR Code PIX" class="w-36 h-36 bg-white p-2 rounded-lg border border-teal-200 mt-1 shadow-sm"><br>
+          Assim que o pagamento for concluído, sua vaga é confirmada na hora!`;
+          adicionarMensagemChat(msg, 'bot');
+        }, 800);
+        return;
+      }
+
+      // 5. Default / Menu Geral
+      setTimeout(() => {
+        const msg = `Olá! Sou a secretária virtual do Dr. Sérgio (Sofia).<br><br>
+        Como posso apoiar você?<br>
+        1️⃣ Confirmar presença na minha sessão<br>
+        2️⃣ Solicitar reagendamento de horário<br>
+        3️⃣ Consultar valores e gerar PIX<br>
+        4️⃣ Agendar uma nova consulta<br>
+        5️⃣ Falar com a secretária humana<br><br>
+        Basta digitar o número!`;
+        adicionarMensagemChat(msg, 'bot');
+      }, 700);
+    }
+
+    function limparChat() {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = `
+        <div class="chat-bubble-bot p-3 self-start max-w-[85%] shadow-sm">
+          🌸 Conversa reiniciada. Como posso te ajudar hoje?<br>
+          1️⃣ Confirmar presença • 2️⃣ Remarcar • 3️⃣ PIX
+        </div>
+      `;
+    }
+
+    // ================= ROTINAS N8N =================
+    async function testarLembretesCron() {
+      const res = await fetch('/api/agendamentos/lembretes-pendentes');
+      const data = await res.json();
+      if (data.total === 0) {
+        alert('Nenhuma consulta está no intervalo de 24h ou 2h no momento.');
+      } else {
+        alert(`O CRON do n8n encontrou ${data.total} consulta(s) para disparo de lembrete anti-no-show!`);
+        // Dispara o primeiro no chat para demonstração
+        const item = data.lembretes[0];
+        await fetch('/api/n8n/enviar-lembrete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            consultaId: item.id,
+            phone: item.patientPhone,
+            name: item.patientName,
+            tipoLembrete: item.tipoLembrete,
+            time: item.time,
+            date: item.date,
+            modality: item.modality,
+            meetLink: item.meetLink
+          })
+        });
+        carregarConsultas();
+      }
+    }
+
+    async function gerarPixManual(phone, name) {
+      const res = await fetch('/api/pix/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, name, amount: appConfig.sessionPrice || 180 })
+      });
+      const data = await res.json();
+      navigator.clipboard.writeText(data.payload);
+      alert(`Código PIX Copia-e-Cola de R$ ${data.amount} para ${name} copiado para sua área de transferência!`);
+    }
+
+    async function copiarWorkflow(filename) {
+      try {
+        const res = await fetch(`/api/workflows/download/${filename}`);
+        const json = await res.text();
+        await navigator.clipboard.writeText(json);
+        alert(`Workflow "${filename}" copiado com sucesso! Abra o n8n e pressione CTRL + V para colar o fluxo.`);
+      } catch (e) {
+        alert('Erro ao copiar workflow. Você também pode baixá-lo no botão de download.');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+{
+  "name": "Subfluxo n8n - Cron Lembretes Anti-No-Show (D-1 e H-2)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "cron_1",
+      "name": "Schedule Trigger - A cada 1 Hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agendamentos/lembretes-pendentes",
+        "method": "GET",
+        "options": {}
+      },
+      "id": "cron_2",
+      "name": "HTTP - Consultas Pendentes de Lembrete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lembretes = $input.first().json.lembretes || [];\nreturn lembretes.map(item => ({\n  json: item\n}));"
+      },
+      "id": "cron_3",
+      "name": "Code - Mapear Lista de Pacientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/enviar-lembrete",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "consultaId",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.patientPhone }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.patientName }}"
+            },
+            {
+              "name": "tipoLembrete",
+              "value": "={{ $json.tipoLembrete }}"
+            },
+            {
+              "name": "time",
+              "value": "={{ $json.time }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ $json.date }}"
+            },
+            {
+              "name": "modality",
+              "value": "={{ $json.modality }}"
+            },
+            {
+              "name": "meetLink",
+              "value": "={{ $json.meetLink }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cron_4",
+      "name": "HTTP - Disparar Mensagem Anti-No-Show",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - A cada 1 Hora": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Consultas Pendentes de Lembrete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Consultas Pendentes de Lembrete": {
+      "main": [
+        [
+          {
+            "node": "Code - Mapear Lista de Pacientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Mapear Lista de Pacientes": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Disparar Mensagem Anti-No-Show",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+
